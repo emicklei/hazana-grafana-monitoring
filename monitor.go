@@ -1,6 +1,7 @@
 package monitoring
 
 import (
+	"context"
 	"flag"
 	"log"
 	"net"
@@ -15,6 +16,7 @@ import (
 var (
 	oMonitor       = flag.Bool("m", false, "if true connect to graphite and send metrics")
 	oMonitorPrefix = flag.String("p", "hazana", "prefix for metrics")
+	oGraphitePort  = flag.String("g", ":2003", "host:port to connect with Graphite")
 	timer          metrics.Timer
 	gauge          metrics.Gauge
 	count          int64
@@ -22,10 +24,10 @@ var (
 )
 
 func initMonitoring() {
-	log.Println("setup graphite")
-	addr, err := net.ResolveTCPAddr("", ":2003")
+	log.Println("[hazana-grafana-monitoring] setup graphite")
+	addr, err := net.ResolveTCPAddr("", *oGraphitePort)
 	if err != nil {
-		log.Fatal("ResolveTCPAddr failed ", err)
+		log.Fatalf("[hazana-grafana-monitoring] ResolveTCPAddr on [%s] failed error [%v] ", *oGraphitePort, err)
 	}
 	go graphite.Graphite(metrics.DefaultRegistry, 1*time.Second, *oMonitorPrefix, addr)
 	timer = metrics.NewTimer()
@@ -39,15 +41,15 @@ type Monitored struct {
 	hazana.Attack
 }
 
-// NewMonitor returns a new Monitor decoration on an Attack
-func NewMonitor(a hazana.Attack) Monitored {
+// WithMonitor returns a new Monitor decoration on an Attack
+func WithMonitor(a hazana.Attack) Monitored {
 	return Monitored{a}
 }
 
 // Do is part of hazana.Attack
-func (m Monitored) Do() hazana.DoResult {
+func (m Monitored) Do(ctx context.Context) hazana.DoResult {
 	before := time.Now()
-	result := m.Attack.Do()
+	result := m.Attack.Do(ctx)
 	if *oMonitor {
 		timer.Update(time.Now().Sub(before))
 	}
