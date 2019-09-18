@@ -27,6 +27,9 @@
 - Add new Dashboard, call it Hazana
 - Add Graph Panel, select datasource 
 
+
+![Sample graph](dashboard-snapshot.png)
+
 # run load test
 
 - Pass the -m flag to enable sending of metrics to Graphite (default is false).
