@@ -17,7 +17,8 @@ var (
 	oMonitor       = flag.Bool("m", false, "if true connect to graphite and send metrics")
 	oMonitorPrefix = flag.String("p", "hazana", "prefix for metrics")
 	oGraphitePort  = flag.String("g", ":2003", "host:port to connect with Graphite")
-	timer          metrics.Timer
+	timers         map[string]metrics.Timer
+	timerMutex     sync.RWMutex
 	gauge          metrics.Gauge
 	count          int64
 	monitorInit    sync.Once
@@ -30,10 +31,24 @@ func initMonitoring() {
 		log.Fatalf("[hazana-grafana-monitoring] ResolveTCPAddr on [%s] failed error [%v] ", *oGraphitePort, err)
 	}
 	go graphite.Graphite(metrics.DefaultRegistry, 1*time.Second, *oMonitorPrefix, addr)
-	timer = metrics.NewTimer()
-	metrics.Register("call-timer", timer)
 	gauge = metrics.NewGauge()
 	metrics.Register("goroutines-count", gauge)
+	timers = map[string]metrics.Timer{}
+}
+
+// timerForLabel creates or return the timer associated with a label.
+func timerForLabel(label string) metrics.Timer {
+	timerMutex.RLock()
+	timer, ok := timers[label]
+	timerMutex.RUnlock()
+	if ok {
+		return timer
+	}
+	timerMutex.Lock()
+	defer timerMutex.Unlock()
+	timer = metrics.NewTimer()
+	metrics.Register(label+"-timer", timer)
+	return timer
 }
 
 // Monitored is a Attack decorator that send metrics to graphite
@@ -51,7 +66,7 @@ func (m Monitored) Do(ctx context.Context) hazana.DoResult {
 	before := time.Now()
 	result := m.Attack.Do(ctx)
 	if *oMonitor {
-		timer.Update(time.Now().Sub(before))
+		timerForLabel(result.RequestLabel).Update(time.Now().Sub(before))
 	}
 	return result
 }
