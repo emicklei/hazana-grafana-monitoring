@@ -47,6 +47,7 @@ func timerForLabel(label string) metrics.Timer {
 	timerMutex.Lock()
 	defer timerMutex.Unlock()
 	timer = metrics.NewTimer()
+	timers[label] = timer
 	metrics.Register(label+"-timer", timer)
 	return timer
 }
