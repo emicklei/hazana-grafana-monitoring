@@ -5,6 +5,7 @@ import (
 	"flag"
 	"log"
 	"net"
+	"regexp"
 	"sync"
 	"time"
 
@@ -48,8 +49,14 @@ func timerForLabel(label string) metrics.Timer {
 	defer timerMutex.Unlock()
 	timer = metrics.NewTimer()
 	timers[label] = timer
-	metrics.Register(label+"-timer", timer)
+	metrics.Register(sanitized(label)+"-timer", timer)
 	return timer
+}
+
+var allowedRegex = regexp.MustCompile("[^a-zA-Z0-9]+")
+
+func sanitized(label string) string {
+	return allowedRegex.ReplaceAllString(label, "-")
 }
 
 // Monitored is a Attack decorator that send metrics to graphite
