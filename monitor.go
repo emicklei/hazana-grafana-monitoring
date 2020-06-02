@@ -25,7 +25,7 @@ var (
 )
 
 func initMonitoring() {
-	log.Println("[hazana-grafana-monitoring] setup graphite")
+	log.Println("[hazana-grafana-monitoring] setup graphite using port", *oGraphitePort)
 	addr, err := net.ResolveTCPAddr("", *oGraphitePort)
 	if err != nil {
 		log.Fatalf("[hazana-grafana-monitoring] ResolveTCPAddr on [%s] failed error [%v] ", *oGraphitePort, err)
