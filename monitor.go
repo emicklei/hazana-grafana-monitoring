@@ -99,3 +99,19 @@ func (m Monitored) Clone() hazana.Attack {
 	}
 	return Monitored{m.Attack.Clone()}
 }
+
+// BeforeRun is part of hazana.AfterRunner
+func (m Monitored) BeforeRun(c hazana.Config) error {
+	if lifecycler, ok := m.Attack.(hazana.BeforeRunner); ok {
+		return lifecycler.BeforeRun(c)
+	}
+	return nil
+}
+
+// AfterRun is part of hazana.AfterRunner
+func (m Monitored) AfterRun(r *hazana.RunReport) error {
+	if lifecycler, ok := m.Attack.(hazana.AfterRunner); ok {
+		return lifecycler.AfterRun(r)
+	}
+	return nil
+}
