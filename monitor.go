@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	metrics "github.com/WinnerSoftLab/go-metrics"
 	graphite "github.com/cyberdelia/go-metrics-graphite"
 	"github.com/emicklei/hazana"
-	metrics "github.com/rcrowley/go-metrics"
 )
 
 var (
